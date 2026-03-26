@@ -1,8 +1,6 @@
 #include <Arduino.h>
 
-uint32_t read_register(void);
 const int NUM_DIGITS = 10;
-void write_register(int segmentValues[NUM_DIGITS][8]);
 
 // Control pins for switch registers
 const int PIN_DATA_IN = 4;
@@ -14,6 +12,10 @@ const int PIN_DATA_OUT = 7;
 const int PIN_LATCH_OUT = 8;
 const int PIN_CLK_OUT = 9;
 
+uint32_t read_register(void);
+void write_register(int segmentValues[NUM_DIGITS][8]);
+void convertToDecimalArray(uint32_t readBytes, int decimalDigitArray[10]);
+void convertToSegmentValues(int decimalDigitArray[10], int segmentValues[NUM_DIGITS][8]);
 // Setup pins
 void setup() 
 {
@@ -30,16 +32,22 @@ void loop()
 {
     // Get 32-bit number from register
     uint32_t readBytes = read_register();
+    
+    // convert bytes to decimal, then seperate each digit
     int decimalDigitArray[10];
+    convertToDecimalArray(readBytes, decimalDigitArray);
 
-    // Convert 32-bit number to decimal value, and seperate into single digit 
-    for(int i = 0; i < 10; i++)
-    {
-        decimalDigitArray[i] = readBytes % 10;
-        readBytes = readBytes / 10;
-    }
+    // Convert each decimal number into the seven segment code
+    int segmentValues[10][8];
+    convertToSegmentValues(decimalDigitArray, segmentValues);
 
-    /* List of all the configurations for the seven segment display in order.               
+    // write all 80 bits to the seven segment display registers
+    write_register(segmentValues); 
+}
+
+void convertToSegmentValues(int decimalDigitArray[10], int segmentValues[NUM_DIGITS][8])
+{
+        /* List of all the configurations for the seven segment display in order.               
         index0 - Binary code for displaying 0
         index1 - Binary code for displaying 1
         ... so on...
@@ -59,8 +67,6 @@ void loop()
         {0, 1, 1, 0, 0, 1, 1, 1}    // 9
     };
 
-    int segmentValues[10][8];
-
     // For each number in decimalDigitArray, get the corresponding segment code, and add to segmentValues.
     for(int i = 0; i < 10; i++)
     {
@@ -70,9 +76,17 @@ void loop()
             segmentValues[i][j] = segmentCodes[decimalNumber][j];
         }
     }
-    write_register(segmentValues); // write to display register
 }
 
+void convertToDecimalArray(uint32_t readBytes, int decimalDigitArray[10])
+{
+    // Convert 32-bit number to decimal value, and seperate into single digit 
+    for(int i = 0; i < 10; i++)
+    {
+        decimalDigitArray[i] = readBytes % 10;
+        readBytes = readBytes / 10;
+    }
+}
 // Read 32 bits from shift register, return 32-bit unsigned value
 uint32_t read_register(void)
 {
