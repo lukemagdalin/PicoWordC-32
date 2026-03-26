@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
 uint32_t read_register(void);
-// void write_register(int[][]);
 const int NUM_DIGITS = 10;
+void write_register(int segmentValues[NUM_DIGITS][8]);
 
 // Control pints for switch registers
 const int PIN_DATA_IN = 4;
@@ -77,9 +77,31 @@ void loop()
 uint32_t read_register(void)
 {
     uint32_t readBytes = 0;
-    for(int i = 0; i<31; i++)
+    digitalWrite(PIN_LATCH_IN, HIGH);
+    delayMicroseconds(5);
+    digitalWrite(PIN_LATCH_IN, LOW);
+    for(int i = 0; i < 32; i++)
     {
-        bitRead(readBytes, i);
+        int bit = digitalRead(PIN_DATA_IN);
+        readBytes |= ((uint32_t)bit << i);
+        digitalWrite(PIN_CLK_IN, HIGH);
+        digitalWrite(PIN_CLK_IN, LOW);
     }
-    return readBytes; 
+    return readBytes;
+}
+
+// Write segment values to display shift registers
+void write_register(int segmentValues[NUM_DIGITS][8])
+{
+    digitalWrite(PIN_LATCH_OUT, LOW);
+    for(int i = NUM_DIGITS - 1; i >= 0; i--)
+    {
+        for(int j = 7; j >= 0; j--)
+        {
+            digitalWrite(PIN_DATA_OUT, segmentValues[i][j]);
+            digitalWrite(PIN_CLK_OUT, HIGH);
+            digitalWrite(PIN_CLK_OUT, LOW);
+        }
+    }
+    digitalWrite(PIN_LATCH_OUT, HIGH);
 }
