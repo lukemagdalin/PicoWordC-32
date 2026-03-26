@@ -13,9 +13,9 @@ const int PIN_LATCH_OUT = 8;
 const int PIN_CLK_OUT = 9;
 
 uint32_t read_register(void);
-void write_register(int segmentValues[NUM_DIGITS][8]);
-void convertToDecimalArray(uint32_t readBytes, int decimalDigitArray[10]);
-void convertToSegmentValues(int decimalDigitArray[10], int segmentValues[NUM_DIGITS][8]);
+void write_register(uint8_t segmentValues[NUM_DIGITS]);
+void convertToDecimalArray(uint32_t readBytes, uint8_t decimalDigitArray[10]);
+void convertToSegmentValues(uint8_t decimalDigitArray[10], uint8_t segmentValues[NUM_DIGITS]);
 // Setup pins
 void setup() 
 {
@@ -34,51 +34,41 @@ void loop()
     uint32_t readBytes = read_register();
     
     // convert bytes to decimal, then seperate each digit
-    int decimalDigitArray[10];
+    uint8_t decimalDigitArray[10];
     convertToDecimalArray(readBytes, decimalDigitArray);
 
     // Convert each decimal number into the seven segment code
-    int segmentValues[10][8];
+    uint8_t segmentValues[NUM_DIGITS];
     convertToSegmentValues(decimalDigitArray, segmentValues);
 
     // write all 80 bits to the seven segment display registers
     write_register(segmentValues); 
 }
 
-void convertToSegmentValues(int decimalDigitArray[10], int segmentValues[NUM_DIGITS][8])
+void convertToSegmentValues(uint8_t decimalDigitArray[10], uint8_t segmentValues[NUM_DIGITS])
 {
-        /* List of all the configurations for the seven segment display in order.               
-        index0 - Binary code for displaying 0
-        index1 - Binary code for displaying 1
-        ... so on...
-        index 10 ... 10
-    */
-    int segmentCodes[10][8] = 
+    // Each segment code packs 8 segments into a single byte (MSB to LSB)
+    uint8_t segmentCodes[10] = 
     {
-        {0, 0, 1, 1, 1, 1, 1, 1},   // 0
-        {0, 0, 0, 0, 0, 1, 1, 0},   // 1
-        {0, 1, 0, 1, 1, 0, 1, 1},   // 2
-        {0, 1, 0, 0, 1, 1, 1, 1},   // 3
-        {0, 1, 1, 0, 0, 1, 1, 0},   // 4
-        {0, 1, 1, 0, 1, 1, 0, 1},   // 5
-        {0, 1, 1, 1, 1, 1, 0, 1},   // 6
-        {0, 0, 0, 0, 0, 1, 1, 1},   // 7
-        {0, 1, 1, 1, 1, 1, 1, 1},   // 8
-        {0, 1, 1, 0, 0, 1, 1, 1}    // 9
+        0b00111111,   // 0
+        0b00000110,   // 1
+        0b01011011,   // 2
+        0b01001111,   // 3
+        0b01100110,   // 4
+        0b01101101,   // 5
+        0b01111101,   // 6
+        0b00000111,   // 7
+        0b01111111,   // 8
+        0b01100111    // 9
     };
 
-    // For each number in decimalDigitArray, get the corresponding segment code, and add to segmentValues.
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < NUM_DIGITS; i++)
     {
-        int decimalNumber = decimalDigitArray[i]; 
-        for(int j = 0; j < 8; j++)
-        {
-            segmentValues[i][j] = segmentCodes[decimalNumber][j];
-        }
+        segmentValues[i] = segmentCodes[decimalDigitArray[i]];
     }
 }
 
-void convertToDecimalArray(uint32_t readBytes, int decimalDigitArray[10])
+void convertToDecimalArray(uint32_t readBytes, uint8_t decimalDigitArray[10])
 {
     // Convert 32-bit number to decimal value, and seperate into single digit 
     for(int i = 0; i < 10; i++)
@@ -105,14 +95,14 @@ uint32_t read_register(void)
 }
 
 // Write segment values to display shift registers
-void write_register(int segmentValues[NUM_DIGITS][8])
+void write_register(uint8_t segmentValues[NUM_DIGITS])
 {
     digitalWrite(PIN_LATCH_OUT, LOW);
     for(int i = NUM_DIGITS - 1; i >= 0; i--)
     {
         for(int j = 7; j >= 0; j--)
         {
-            digitalWrite(PIN_DATA_OUT, segmentValues[i][j]);
+            digitalWrite(PIN_DATA_OUT, (segmentValues[i] >> j) & 1);
             digitalWrite(PIN_CLK_OUT, HIGH);
             digitalWrite(PIN_CLK_OUT, LOW);
         }
