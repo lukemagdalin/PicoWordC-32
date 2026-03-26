@@ -4,7 +4,7 @@ uint32_t read_register(void);
 const int NUM_DIGITS = 10;
 void write_register(int segmentValues[NUM_DIGITS][8]);
 
-// Control pints for switch registers
+// Control pins for switch registers
 const int PIN_DATA_IN = 4;
 const int PIN_LATCH_IN = 5;
 const int PIN_CLK_IN = 6;
@@ -36,7 +36,7 @@ void loop()
     for(int i = 0; i < 10; i++)
     {
         decimalDigitArray[i] = readBytes % 10;
-        readBytes = readBytes >> 1;
+        readBytes = readBytes / 10;
     }
 
     /* List of all the configurations for the seven segment display in order.               
@@ -71,7 +71,7 @@ void loop()
         }
     }
     write_register(segmentValues); // write to display register
-};
+}
 
 // Read 32 bits from shift register, return 32-bit unsigned value
 uint32_t read_register(void)
