@@ -29,9 +29,8 @@ void setup()
 void loop() 
 {
     // Get 32-bit number from register
-    uint32_t readBytes;
+    uint32_t readBytes = read_register();
     int decimalDigitArray[10];
-    read_register();
 
     // Convert 32-bit number to decimal value, and seperate into single digit 
     for(int i = 0; i < 10; i++)
@@ -71,21 +70,22 @@ void loop()
             segmentValues[i][j] = segmentCodes[decimalNumber][j];
         }
     }
+    write_register(segmentValues); // write to display register
 };
 
 // Read 32 bits from shift register, return 32-bit unsigned value
 uint32_t read_register(void)
 {
     uint32_t readBytes = 0;
-    digitalWrite(PIN_LATCH_IN, HIGH);
+    digitalWrite(PIN_LATCH_IN, HIGH); // let registers get values from switches
     delayMicroseconds(5);
-    digitalWrite(PIN_LATCH_IN, LOW);
+    digitalWrite(PIN_LATCH_IN, LOW); // lock registers to the values
     for(int i = 0; i < 32; i++)
     {
-        int bit = digitalRead(PIN_DATA_IN);
-        readBytes |= ((uint32_t)bit << i);
-        digitalWrite(PIN_CLK_IN, HIGH);
-        digitalWrite(PIN_CLK_IN, LOW);
+        int bit = digitalRead(PIN_DATA_IN); // get the bit value of the current iteration
+        readBytes |= ((uint32_t)bit << i); // Add bit to readBytes
+        digitalWrite(PIN_CLK_IN, HIGH); // Iterate to next bit
+        digitalWrite(PIN_CLK_IN, LOW); 
     }
     return readBytes;
 }
