@@ -23,16 +23,17 @@ movs r1, #0
 //now this is delay code if we need it, can change delay above main
 bl delay
 //another digital write needed here for locking registers to values
-// begin the loop
+// begin the loop:
 movs r2, #32
-movs r3, #0
-
 read_register_loop: 
-// need a way to put the values in digital read onto a register r4, is our bit variable
-
+//r3 is our bit variable
+//using r1 for read_bytes, we can store after
+//need r3 = digital read bullshit here
+add r1, r1, r3
+//need digitalwrite iteration shit here (??)
 subs r2, r2, #1
 bne read_register_loop
-
+str r1, r0
 pop {r0-r3}
 bx    lr
 
